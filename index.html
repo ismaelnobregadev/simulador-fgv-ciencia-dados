@@ -249,18 +249,18 @@ const TOPICS = [
 ];
 
 const QUESTIONS = [
-  {id:1,topic:'arvore',q:`<p>Considere a arvore de decisao abaixo para classificacao de risco de credito:</p><div class="svg-wrap">
-<svg viewBox="0 0 300 180" width="300" height="180" style="max-width:100%"><style>.tn{fill:#e3f2fd;stroke:#1565c0;stroke-width:1.5}.te{stroke:#78909c;stroke-width:1.5;fill:none}.tt{font-size:11px;text-anchor:middle;fill:#212121;font-family:Segoe UI,sans-serif}</style>
-<line x1="150" y1="10" x2="75" y2="70" class="te"/><line x1="150" y1="10" x2="225" y2="70" class="te"/>
-<rect x="120" y="0" width="60" height="24" rx="4" class="tn"/><text x="150" y="16" class="tt">Renda ge 5K?</text>
-<rect x="45" y="60" width="60" height="24" rx="4" class="tn"/><text x="75" y="76" class="tt">Score ge 600?</text>
-<rect x="195" y="60" width="60" height="24" rx="4" class="tn"/><text x="225" y="76" class="tt">Aprovado</text>
-<line x1="75" y1="84" x2="40" y2="140" class="te"/><line x1="75" y1="84" x2="110" y2="140" class="te"/>
-<rect x="10" y="135" width="60" height="24" rx="4" class="tn"/><text x="40" y="151" class="tt">Reprovado</text>
-<rect x="80" y="135" width="60" height="24" rx="4" class="tn"/><text x="110" y="151" class="tt">Aprovado</text>
-<text x="52" y="98" class="tt" font-size="9">Sim</text><text x="98" y="98" class="tt" font-size="9">Nao</text>
-<text x="140" y="42" class="tt" font-size="9">Sim</text><text x="190" y="42" class="tt" font-size="9">Nao</text>
-</svg></div><p>Um cliente com renda de R$ 7.000 e score de credito 550 sera classificado como:</p>`,alts:["Aprovado", "Reprovado", "Risco Moderado", "Inconclusivo", "Depende de outros atributos"],correct:1,explain:["ERRADA: Para ser aprovado, o cliente precisaria de score ge 600.", "CORRETA: Renda ge R$5.000 (segue para Score ge 600?). 550 < 600, segue para \"Nao\", resultando em \"Reprovado\".", "ERRADA: O no \"Risco Moderado\" nao existe nesta arvore.", "ERRADA: A classificacao e deterministica.", "ERRADA: A arvore considera apenas os atributos apresentados."]},
+   {id:1,topic:'arvore',q:`<p>Considere a arvore de decisao abaixo para classificacao de risco de credito:</p><div class="svg-wrap">
+<svg viewBox="0 0 300 190" width="300" height="190" style="max-width:100%"><style>.tn{fill:#e3f2fd;stroke:#1565c0;stroke-width:1.5}.te{stroke:#78909c;stroke-width:1.5;fill:none}.tt{font-size:11px;text-anchor:middle;fill:#212121;font-family:Segoe UI,sans-serif}</style>
+<line x1="150" y1="15" x2="75" y2="75" class="te"/><line x1="150" y1="15" x2="225" y2="75" class="te"/>
+<rect x="115" y="0" width="70" height="26" rx="4" class="tn"/><text x="150" y="17" class="tt">Renda ge 5K?</text>
+<rect x="40" y="65" width="70" height="26" rx="4" class="tn"/><text x="75" y="82" class="tt">Score ge 600?</text>
+<rect x="190" y="65" width="70" height="26" rx="4" class="tn"/><text x="225" y="82" class="tt">Reprovado</text>
+<line x1="75" y1="91" x2="40" y2="150" class="te"/><line x1="75" y1="91" x2="110" y2="150" class="te"/>
+<rect x="5" y="145" width="70" height="26" rx="4" class="tn"/><text x="40" y="162" class="tt">Aprovado</text>
+<rect x="75" y="145" width="70" height="26" rx="4" class="tn"/><text x="110" y="162" class="tt">Reprovado</text>
+<text x="50" y="115" class="tt" font-size="9">Sim</text><text x="105" y="115" class="tt" font-size="9">Nao</text>
+<text x="130" y="50" class="tt" font-size="9">Sim</text><text x="190" y="50" class="tt" font-size="9">Nao</text>
+</svg></div><p>Um cliente com renda de R$ 7.000 e score de credito 550 sera classificado como:</p>`,alts:["Aprovado", "Reprovado", "Risco Moderado", "Inconclusivo", "Depende de outros atributos"],correct:1,explain:["ERRADA: Para ser aprovado, o cliente precisaria de Renda ge 5K E Score ge 600.", "CORRETA: Renda ge R$5.000 (segue para Score ge 600?). Como 550 < 600, segue para o ramo \"Nao\", resultando em \"Reprovado\".", "ERRADA: O no \"Risco Moderado\" nao existe nesta arvore.", "ERRADA: A classificacao e deterministica — o caminho e unico.", "ERRADA: A arvore considera apenas os atributos apresentados (Renda e Score)."]},
   {id:2,topic:'arvore',q:`<p>Uma arvore de decisao foi treinada com profundidade 12 e apenas 50 amostras de treinamento. A acuracia em treino e 100%, mas em teste e 62%. O problema mais provavel e:</p>`,alts:["Overfitting devido a alta complexidade", "Underfitting por falta de dados", "Vies alto do modelo", "A arvore deveria ser mais profunda", "Problema de desbalanceamento de classes"],correct:0,explain:["CORRETA: Com 50 amostras e profundidade 12, a arvore memoriza os dados (overfitting). Acuracia perfeita em treino e baixa em teste e classico.", "ERRADA: Underfitting ocorre quando baixo desempenho em treino e teste.", "ERRADA: Vies alto esta associado a underfitting.", "ERRADA: Aumentar a profundidade pioraria o overfitting.", "ERRADA: O problema descrito e de overfitting."]},
   {id:3,topic:'arvore',q:`<p>Em uma arvore de decisao, o criterio de divisao utilizado e o Indice de Gini. Em um no com duas classes, onde a probabilidade da classe positiva e p=0,3 e da negativa q=0,7, o valor do Indice de Gini e:</p><div class="calc">Gini = 1 - S p_i^2</div>`,alts:["0,21", "0,42", "0,49", "0,58", "0,70"],correct:1,explain:["ERRADA:", "CORRETA: Gini = 1 - (0,3^2 + 0,7^2) = 1 - 0,58 = 0,42.", "ERRADA: 0,49 seria o quadrado de 0,7 isoladamente.", "ERRADA: 0,58 e a soma dos quadrados.", "ERRADA: 0,70 e a probabilidade da classe negativa."]},
   {id:4,topic:'arvore',q:`<p>Sobre o algoritmo CART (Classification and Regression Trees), e correto afirmar que:</p>`,alts:["Utiliza entropia como criterio padrao", "Produz apenas arvores binarias", "Nao permite poda (pruning)", "So funciona para classificacao", "Nao lida com dados numericos"],correct:1,explain:["ERRADA: CART usa Indice de Gini como padrao.", "CORRETA: CART produz arvores binarias, dividindo cada no em exatamente dois ramos.", "ERRADA: CART permite poda por complexidade.", "ERRADA: CART funciona para classificacao e regressao.", "ERRADA: CART lida com dados numericos e categoricos."]},
