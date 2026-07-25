@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulado FGV - Ciência de Dados</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#1a237e;--primary-light:#534bae;--primary-dark:#000051;--secondary:#00897b;--accent:#ff6f00;--bg:#f5f5f5;--card:#fff;--text:#212121;--text-light:#757575;--border:#e0e0e0;--correct:#2e7d32;--wrong:#c62828;--marked:#ff8f00;--font:'Segoe UI',system-ui,-apple-system,sans-serif;--shadow:0 2px 8px rgba(0,0,0,.1);--radius:12px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+.hidden{display:none!important}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--primary-light);border-radius:3px}
+#startScreen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(135deg,var(--primary-dark),var(--primary),var(--primary-light))}
+#startScreen h1{color:#fff;font-size:2.2em;text-align:center;margin-bottom:8px}
+#startScreen .sub{color:rgba(255,255,255,.8);font-size:1.1em;text-align:center;margin-bottom:30px}
+.start-card{background:rgba(255,255,255,.95);border-radius:var(--radius);padding:40px;max-width:700px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.start-card h2{color:var(--primary);margin-bottom:16px;font-size:1.3em}
+.start-card ul{list-style:none;padding:0}
+.start-card ul li{padding:8px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.start-card ul li:last-child{border-bottom:none}
+.start-card ul li span{font-weight:600;color:var(--primary)}
+.btn-start{background:var(--secondary);color:#fff;border:none;padding:16px 48px;font-size:1.2em;border-radius:var(--radius);cursor:pointer;margin-top:24px;width:100%;font-weight:600;transition:.3s}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,137,123,.4)}
+#examScreen{display:none;min-height:100vh}
+#examScreen.active{display:flex;flex-direction:column}
+.top-bar{background:var(--primary);color:#fff;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.top-bar .timer{font-size:1.3em;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.top-bar .timer.warning{color:#ffeb3b}
+.top-bar .timer.danger{color:#ff5252;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.top-bar .stats{display:flex;gap:20px;font-size:.9em}
+.top-bar .stats span{background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px}
+.progress-container{height:4px;background:var(--primary-dark)}
+.progress-bar{height:100%;background:var(--secondary);transition:width .5s;width:0}
+.exam-body{display:flex;flex:1;min-height:calc(100vh - 56px)}
+.sidebar{width:240px;background:var(--card);border-right:1px solid var(--border);padding:16px;overflow-y:auto;flex-shrink:0}
+.sidebar h3{font-size:.85em;color:var(--text-light);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+.sidebar .topic-filter{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+.sidebar .topic-filter button{font-size:.7em;padding:2px 8px;border:1px solid var(--border);border-radius:12px;background:var(--bg);cursor:pointer;transition:.2s}
+.sidebar .topic-filter button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.question-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.question-grid .q-num{aspect-ratio:1;border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.75em;cursor:pointer;transition:.2s;background:var(--card)}
+.question-grid .q-num:hover{background:var(--bg);border-color:var(--primary-light)}
+.question-grid .q-num.answered{background:#c8e6c9;border-color:var(--correct)}
+.question-grid .q-num.marked{background:#fff3e0;border-color:var(--marked)}
+.question-grid .q-num.answered.marked{background:linear-gradient(135deg,#c8e6c9 50%,#fff3e0 50%)}
+.question-grid .q-num.current{border:2px solid var(--primary);font-weight:700}
+.question-grid .q-num.correct{background:#a5d6a7!important;border-color:var(--correct)!important}
+.question-grid .q-num.wrong{background:#ef9a9a!important;border-color:var(--wrong)!important}
+.main-content{flex:1;padding:24px 32px;overflow-y:auto;max-width:900px;margin:0 auto;width:100%}
+.question-card{background:var(--card);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow);margin-bottom:16px}
+.question-card .q-header{display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.question-card .q-number{font-weight:700;color:var(--primary);font-size:1.1em}
+.question-card .q-topic{background:var(--primary-light);color:#fff;padding:2px 12px;border-radius:12px;font-size:.8em}
+.question-card .q-text{font-size:1.05em;line-height:1.7;margin-bottom:16px;color:var(--text)}
+.question-card .q-text .calc{display:block;background:#f3e5f5;padding:12px 16px;border-radius:8px;margin:12px 0;font-family:'Courier New',monospace;text-align:center}
+.question-card .q-text .table-wrap{overflow-x:auto;margin:12px 0}
+.question-card .q-text table{border-collapse:collapse;width:100%;font-size:.9em}
+.question-card .q-text table th,.question-card .q-text table td{border:1px solid var(--border);padding:6px 10px;text-align:center}
+.question-card .q-text table th{background:var(--primary);color:#fff}
+.question-card .q-text .svg-wrap{display:flex;justify-content:center;margin:12px 0}
+.question-card .q-text .confusion-matrix{display:grid;grid-template-columns:auto auto auto;gap:2px;max-width:300px;margin:12px auto;font-size:.85em}
+.question-card .q-text .confusion-matrix>div{padding:8px 12px;border:1px solid var(--border);text-align:center}
+.question-card .q-text .confusion-matrix .cm-label{font-weight:600;background:var(--bg)}
+.question-card .q-text .confusion-matrix .cm-hdr{font-weight:600;background:var(--primary);color:#fff}
+.question-card .q-text .confusion-matrix .cm-tp{background:#c8e6c9}
+.question-card .q-text .confusion-matrix .cm-tn{background:#c8e6c9}
+.question-card .q-text .confusion-matrix .cm-fp{background:#ffcdd2}
+.question-card .q-text .confusion-matrix .cm-fn{background:#ffcdd2}
+.alternatives{list-style:none;padding:0}
+.alternatives li{margin-bottom:8px}
+.alternatives li label{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:.2s;font-size:.98em;line-height:1.5}
+.alternatives li label:hover{border-color:var(--primary-light);background:#f5f5ff}
+.alternatives li input[type=radio]{display:none}
+.alternatives li input[type=radio]:checked+label{border-color:var(--primary);background:#e8eaf6}
+.alternatives li .alt-letter{font-weight:700;color:var(--primary);min-width:24px}
+.question-card .q-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.q-actions button{padding:8px 16px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85em;background:var(--bg);transition:.2s;display:flex;align-items:center;gap:6px}
+.q-actions button:hover{background:var(--primary-light);color:#fff;border-color:var(--primary-light)}
+.q-actions button.mark-btn.marked{background:var(--marked);color:#fff;border-color:var(--marked)}
+.nav-buttons{display:flex;justify-content:space-between;margin-top:16px;gap:12px}
+.nav-buttons button{padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:.95em;transition:.2s;display:flex;align-items:center;gap:8px}
+.nav-buttons .prev{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.nav-buttons .prev:hover{background:var(--border)}
+.nav-buttons .next{background:var(--primary);color:#fff}
+.nav-buttons .next:hover{background:var(--primary-light)}
+.nav-buttons .finish{background:var(--accent);color:#fff}
+.nav-buttons .finish:hover{background:#e65100}
+#resultsScreen{display:none;padding:40px 20px;max-width:1000px;margin:0 auto}
+#resultsScreen.active{display:block}
+.result-header{text-align:center;margin-bottom:32px}
+.result-header h1{color:var(--primary);font-size:2em;margin-bottom:8px}
+.result-header .score-circle{width:160px;height:160px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:20px auto;background:conic-gradient(var(--secondary) var(--score-deg,0deg),var(--border) 0);position:relative}
+.result-header .score-circle::before{content:'';position:absolute;width:130px;height:130px;border-radius:50%;background:var(--card)}
+.result-header .score-circle .score-val{position:relative;z-index:1;font-size:2.2em;font-weight:700;color:var(--primary)}
+.result-header .score-circle .score-label{position:relative;z-index:1;font-size:.9em;color:var(--text-light)}
+.result-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin:24px 0}
+.result-stats .stat-card{background:var(--card);padding:20px;border-radius:var(--radius);box-shadow:var(--shadow);text-align:center}
+.result-stats .stat-card .stat-val{font-size:1.5em;font-weight:700;color:var(--primary)}
+.result-stats .stat-card .stat-label{font-size:.85em;color:var(--text-light);margin-top:4px}
+.result-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.result-tabs button{padding:8px 20px;border:1px solid var(--border);border-radius:8px 8px 0 0;cursor:pointer;background:var(--bg);font-size:.9em}
+.result-tabs button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.result-panel{background:var(--card);border-radius:0 var(--radius) var(--radius) var(--radius);padding:24px;box-shadow:var(--shadow)}
+.performance-chart{display:flex;flex-direction:column;gap:12px}
+.performance-chart .topic-bar{display:flex;align-items:center;gap:12px}
+.performance-chart .topic-bar .topic-label{min-width:140px;font-size:.85em;text-align:right;flex-shrink:0}
+.performance-chart .topic-bar .bar-bg{flex:1;height:24px;background:var(--bg);border-radius:12px;overflow:hidden}
+.performance-chart .topic-bar .bar-fill{height:100%;border-radius:12px;transition:width 1s;display:flex;align-items:center;justify-content:center;font-size:.75em;color:#fff;font-weight:600}
+.performance-chart .topic-bar .bar-pct{min-width:40px;font-size:.8em;font-weight:600}
+.answer-key .q-review{border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px}
+.answer-key .q-review .rev-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:4px}
+.answer-key .q-review .rev-q{font-weight:600;font-size:.95em}
+.answer-key .q-review .rev-topic{font-size:.8em;color:var(--text-light)}
+.answer-key .q-review .rev-answer{display:flex;gap:16px;margin:8px 0;font-size:.9em}
+.answer-key .q-review .rev-answer .rev-user{color:var(--wrong)}
+.answer-key .q-review .rev-answer .rev-user.correct{color:var(--correct)}
+.answer-key .q-review .rev-answer .rev-correct{color:var(--correct);font-weight:600}
+.answer-key .q-review .rev-explain{font-size:.85em;color:var(--text-light);line-height:1.6;background:var(--bg);padding:12px;border-radius:8px;margin-top:8px}
+.answer-key .q-review .rev-explain strong{color:var(--text)}
+.performance-chart .topic-bar .bar-fill.good{background:var(--correct)}
+.performance-chart .topic-bar .bar-fill.ok{background:var(--accent)}
+.performance-chart .topic-bar .bar-fill.bad{background:var(--wrong)}
+.fullscreen-btn{background:rgba(255,255,255,.15);border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:.85em}
+@media(max-width:768px){
+.sidebar{display:none}
+#startScreen h1{font-size:1.5em}
+.start-card{padding:24px}
+.exam-body{flex-direction:column}
+.main-content{padding:16px}
+.question-card{padding:16px}
+.top-bar .stats{font-size:.8em;gap:8px}
+.top-bar .stats span{padding:2px 8px}
+.question-grid{grid-template-columns:repeat(10,1fr)}
+.nav-buttons{flex-wrap:wrap}
+.nav-buttons button{flex:1;min-width:100px;justify-content:center}
+.mobile-sidebar-toggle{display:block!important}
+}
+.mobile-sidebar-toggle{display:none;background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-size:.9em;margin:8px 16px}
+.sidebar.show{display:block!important;position:fixed;top:56px;left:0;bottom:0;z-index:99;width:260px;background:var(--card);box-shadow:2px 0 12px rgba(0,0,0,.15)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:98}
+.sidebar-overlay.show{display:block}
+@media(min-width:769px){.sidebar-overlay{display:none!important}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn .3s ease}
+</style>
+</head>
+<body>
+<div id="startScreen">
+  <h1>Simulado FGV</h1>
+  <p class="sub">Ciência de Dados &middot; 100 questões &middot; 4 horas</p>
+  <div class="start-card">
+    <h2>Instru&ccedil;&otilde;es</h2>
+    <ul>
+      <li><span>Total de quest&otilde;es:</span> 100</li>
+      <li><span>Tempo total:</span> 4 horas (240 minutos)</li>
+      <li><span>Distribui&ccedil;&atilde;o:</span> 13 temas de Ci&ecirc;ncia de Dados</li>
+      <li><span>Estilo:</span> FGV &mdash; 5 alternativas (A&ndash;E), 1 correta</li>
+      <li><span>Salvamento:</span> autom&aacute;tico no navegador</li>
+      <li><span>Retomada:</span> voc&ecirc; pode fechar e continuar depois</li>
+    </ul>
+    <h2 style="margin-top:20px">Distribui&ccedil;&atilde;o das Quest&otilde;es</h2>
+    <ul id="topicDistList"></ul>
+    <button class="btn-start" onclick="startExam()">▶ Iniciar Prova</button>
+  </div>
+</div>
+<div id="examScreen">
+  <div class="top-bar">
+    <div class="timer" id="timer">04:00:00</div>
+    <div class="stats">
+      <span id="answeredCount">0/100</span>
+      <span id="markedCount">0 marcadas</span>
+    </div>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶ Tela cheia</button>
+  </div>
+  <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+  <button class="mobile-sidebar-toggle" onclick="toggleSidebar()">☰ Navega&ccedil;&atilde;o</button>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+  <div class="exam-body">
+    <div class="sidebar" id="sidebar">
+      <h3>Navega&ccedil;&atilde;o</h3>
+      <div class="topic-filter" id="topicFilters"></div>
+      <div class="question-grid" id="questionGrid"></div>
+    </div>
+    <div class="main-content" id="mainContent">
+      <div class="question-card fade-in" id="questionCard">
+        <div class="q-header">
+          <span class="q-number" id="qNumberDisplay">Quest&atilde;o 1</span>
+          <span class="q-topic" id="qTopicDisplay">Tema</span>
+        </div>
+        <div class="q-text" id="qText"></div>
+        <ul class="alternatives" id="alternatives"></ul>
+        <div class="q-actions">
+          <button class="mark-btn" id="markBtn" onclick="toggleMark()">📌 Marcar para revis&atilde;o</button>
+        </div>
+      </div>
+      <div class="nav-buttons">
+        <button class="prev" onclick="navigate(-1)">← Anterior</button>
+        <button class="finish" onclick="finishExam()">✓ Finalizar Prova</button>
+        <button class="next" onclick="navigate(1)">Pr&oacute;xima →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="resultsScreen">
+  <div class="result-header">
+    <h1>Resultado Final</h1>
+    <p style="color:var(--text-light)">Simulado FGV &middot; Ci&ecirc;ncia de Dados</p>
+    <div class="score-circle" id="scoreCircle">
+      <span class="score-val" id="scoreVal">0%</span>
+      <span class="score-label">de acertos</span>
+    </div>
+    <p id="scoreMessage" style="margin-top:12px;font-size:1.1em;font-weight:600"></p>
+  </div>
+  <div class="result-stats">
+    <div class="stat-card"><div class="stat-val" id="rAnswered">0</div><div class="stat-label">Respondidas</div></div>
+    <div class="stat-card"><div class="stat-val" id="rCorrect">0</div><div class="stat-label">Corretas</div></div>
+    <div class="stat-card"><div class="stat-val" id="rWrong">0</div><div class="stat-label">Incorretas</div></div>
+    <div class="stat-card"><div class="stat-val" id="rTime">00:00:00</div><div class="stat-label">Tempo gasto</div></div>
+  </div>
+  <div class="result-tabs">
+    <button class="active" onclick="showResultTab('performance')">📊 Desempenho por Tema</button>
+    <button onclick="showResultTab('answers')">📖 Gabarito Comentado</button>
+  </div>
+  <div class="result-panel" id="resultPanel"></div>
+  <div style="text-align:center;margin-top:24px">
+    <button class="btn-start" style="max-width:300px;display:inline-block" onclick="startExam()">🔄 Refazer Simulado</button>
+  </div>
+</div>
+<script>
+
+// ===== DADOS =====
+const TOPICS = [
+  {id:'arvore',name:'Arvores de Decisao',count:15},
+  {id:'regressao',name:'Regressao Linear',count:15},
+  {id:'metricas',name:'Metricas de Avaliacao',count:12},
+  {id:'roc',name:'Curva ROC e AUC',count:7},
+  {id:'naive',name:'Naive Bayes',count:8},
+  {id:'redes',name:'Redes Neurais',count:8},
+  {id:'pca',name:'PCA e Reducao de Dimensionalidade',count:8},
+  {id:'knn',name:'K-NN',count:6},
+  {id:'entropia',name:'Entropia',count:5},
+  {id:'ganho',name:'Ganho de Informacao',count:5},
+  {id:'vies',name:'Vies x Variancia',count:4},
+  {id:'mse',name:'MSE e RMSE',count:4},
+  {id:'anova',name:'ANOVA',count:3},
+];
+
+const QUESTIONS = [
+  {id:1,topic:'arvore',q:`<p>Considere a arvore de decisao abaixo para classificacao de risco de credito:</p><div class="svg-wrap">
+<svg viewBox="0 0 300 180" width="300" height="180" style="max-width:100%"><style>.tn{fill:#e3f2fd;stroke:#1565c0;stroke-width:1.5}.te{stroke:#78909c;stroke-width:1.5;fill:none}.tt{font-size:11px;text-anchor:middle;fill:#212121;font-family:Segoe UI,sans-serif}</style>
+<line x1="150" y1="10" x2="75" y2="70" class="te"/><line x1="150" y1="10" x2="225" y2="70" class="te"/>
+<rect x="120" y="0" width="60" height="24" rx="4" class="tn"/><text x="150" y="16" class="tt">Renda ge 5K?</text>
+<rect x="45" y="60" width="60" height="24" rx="4" class="tn"/><text x="75" y="76" class="tt">Score ge 600?</text>
+<rect x="195" y="60" width="60" height="24" rx="4" class="tn"/><text x="225" y="76" class="tt">Aprovado</text>
+<line x1="75" y1="84" x2="40" y2="140" class="te"/><line x1="75" y1="84" x2="110" y2="140" class="te"/>
+<rect x="10" y="135" width="60" height="24" rx="4" class="tn"/><text x="40" y="151" class="tt">Reprovado</text>
+<rect x="80" y="135" width="60" height="24" rx="4" class="tn"/><text x="110" y="151" class="tt">Aprovado</text>
+<text x="52" y="98" class="tt" font-size="9">Sim</text><text x="98" y="98" class="tt" font-size="9">Nao</text>
+<text x="140" y="42" class="tt" font-size="9">Sim</text><text x="190" y="42" class="tt" font-size="9">Nao</text>
+</svg></div><p>Um cliente com renda de R$ 7.000 e score de credito 550 sera classificado como:</p>`,alts:["Aprovado", "Reprovado", "Risco Moderado", "Inconclusivo", "Depende de outros atributos"],correct:1,explain:["ERRADA: Para ser aprovado, o cliente precisaria de score ge 600.", "CORRETA: Renda ge R$5.000 (segue para Score ge 600?). 550 < 600, segue para \"Nao\", resultando em \"Reprovado\".", "ERRADA: O no \"Risco Moderado\" nao existe nesta arvore.", "ERRADA: A classificacao e deterministica.", "ERRADA: A arvore considera apenas os atributos apresentados."]},
+  {id:2,topic:'arvore',q:`<p>Uma arvore de decisao foi treinada com profundidade 12 e apenas 50 amostras de treinamento. A acuracia em treino e 100%, mas em teste e 62%. O problema mais provavel e:</p>`,alts:["Overfitting devido a alta complexidade", "Underfitting por falta de dados", "Vies alto do modelo", "A arvore deveria ser mais profunda", "Problema de desbalanceamento de classes"],correct:0,explain:["CORRETA: Com 50 amostras e profundidade 12, a arvore memoriza os dados (overfitting). Acuracia perfeita em treino e baixa em teste e classico.", "ERRADA: Underfitting ocorre quando baixo desempenho em treino e teste.", "ERRADA: Vies alto esta associado a underfitting.", "ERRADA: Aumentar a profundidade pioraria o overfitting.", "ERRADA: O problema descrito e de overfitting."]},
+  {id:3,topic:'arvore',q:`<p>Em uma arvore de decisao, o criterio de divisao utilizado e o Indice de Gini. Em um no com duas classes, onde a probabilidade da classe positiva e p=0,3 e da negativa q=0,7, o valor do Indice de Gini e:</p><div class="calc">Gini = 1 - S p_i^2</div>`,alts:["0,21", "0,42", "0,49", "0,58", "0,70"],correct:1,explain:["ERRADA:", "CORRETA: Gini = 1 - (0,3^2 + 0,7^2) = 1 - 0,58 = 0,42.", "ERRADA: 0,49 seria o quadrado de 0,7 isoladamente.", "ERRADA: 0,58 e a soma dos quadrados.", "ERRADA: 0,70 e a probabilidade da classe negativa."]},
+  {id:4,topic:'arvore',q:`<p>Sobre o algoritmo CART (Classification and Regression Trees), e correto afirmar que:</p>`,alts:["Utiliza entropia como criterio padrao", "Produz apenas arvores binarias", "Nao permite poda (pruning)", "So funciona para classificacao", "Nao lida com dados numericos"],correct:1,explain:["ERRADA: CART usa Indice de Gini como padrao.", "CORRETA: CART produz arvores binarias, dividindo cada no em exatamente dois ramos.", "ERRADA: CART permite poda por complexidade.", "ERRADA: CART funciona para classificacao e regressao.", "ERRADA: CART lida com dados numericos e categoricos."]},
+  {id:5,topic:'arvore',q:`<p>Uma arvore de decisao tem profundidade 5 e 10 nos folha. Cada folha corresponde a uma regiao de decisao. Quantas regioes distintas existem no espaco de atributos?</p>`,alts:["5", "10", "15", "20", "32"],correct:1,explain:["ERRADA: 5 e a profundidade, nao o numero de regioes.", "CORRETA: Cada no folha representa uma regiao de decisao. Existem 10 regioes.", "ERRADA: Soma incorreta.", "ERRADA: Nao ha relacao direta.", "ERRADA: 2^5=32 seria o maximo de folhas, nao as reais."]},
+  {id:6,topic:'arvore',q:`<p>Uma arvore apresentou as seguintes importancias de atributos: Idade=0,45; Renda=0,30; Escolaridade=0,15; Regiao=0,10. A interpretacao correta e:</p>`,alts:["Idade e o atributo mais relevante", "Renda e duas vezes mais importante que Idade", "Escolaridade nao tem relevancia", "Regiao pode ser descartada sem perda", "A soma das importancias deveria ser 100"],correct:0,explain:["CORRETA: Idade com 0,45 e o mais relevante.", "ERRADA: Idade (0,45) > Renda (0,30).", "ERRADA: Escolaridade contribui positivamente.", "ERRADA: 0,10 ainda e relevante.", "ERRADA: A soma e 1,0 (normalizada)."]},
+  {id:7,topic:'arvore',q:`<p>O processo de poda (pruning) em arvores de decisao tem como principal objetivo:</p>`,alts:["Aumentar a profundidade da arvore", "Reduzir o overfitting", "Aumentar a acuracia em treino", "Reduzir o vies do modelo", "Eliminar atributos categoricos"],correct:1,explain:["ERRADA: Podar reduz a profundidade.", "CORRETA: A poda remove nos que contribuem pouco, reduzindo overfitting.", "ERRADA: A poda geralmente reduz a acuracia em treino.", "ERRADA: A poda reduz a variancia.", "ERRADA: Nao esta relacionado a atributos categoricos."]},
+  {id:8,topic:'arvore',q:`<p>Qual situacao indica que uma arvore de decisao esta sofrendo de underfitting?</p>`,alts:["Acuracia de treino baixa e teste baixa", "Acuracia de treino alta e teste baixa", "Acuracia de treino alta e teste alta", "Acuracia de treino baixa e teste alta", "Nos folha com apenas uma amostra"],correct:0,explain:["CORRETA: Underfitting: baixo desempenho em treino e teste (modelo muito simples).", "ERRADA: Overfitting.", "ERRADA: Cenario ideal.", "ERRADA: Cenario incomum.", "ERRADA: Isso indica overfitting."]},
+  {id:9,topic:'arvore',q:`<p>Em uma arvore de decisao para regressao, o valor previsto em um no folha e:</p>`,alts:["A moda dos valores de treino no no", "A mediana dos valores de treino no no", "A media dos valores de treino no no", "O valor maximo dos valores de treino", "Um valor aleatorio dos dados de treino"],correct:2,explain:["ERRADA: Moda e usada em classificacao.", "ERRADA: Mediana nao e o padrao.", "CORRETA: Em arvores de regressao, o valor previsto e a media dos valores de treino no no folha.", "ERRADA: Maximo nao e representativo.", "ERRADA: O valor e deterministico."]},
+  {id:10,topic:'arvore',q:`<p>Uma arvore foi treinada com max_depth=3. Quantas divisoes (splits) no maximo essa arvore pode realizar em um unico caminho (da raiz ate a folha)?</p>`,alts:["2", "3", "4", "7", "8"],correct:1,explain:["ERRADA: max_depth=3 da raiz ate a folha.", "CORRETA: Com max_depth=3, ha no maximo 3 divisoes em cada caminho.", "ERRADA: 4 incluiria profundidade extra.", "ERRADA: 7 seria 2^3-1 divisoes totais.", "ERRADA: 8 seria 2^3 divisoes totais."]},
+  {id:11,topic:'arvore',q:`<p>Sobre a importancia de atributos em arvores de decisao, e correto afirmar que:</p>`,alts:["E calculada pela reducao total do criterio de divisao", "E igual ao coeficiente da regressao linear", "E sempre positiva e soma 100", "Depende apenas da posicao do atributo", "E calculada apenas para atributos categoricos"],correct:0,explain:["CORRETA: A importancia soma a reducao do criterio (Gini/entropia) em todos os nos onde o atributo e usado.", "ERRADA: Nao ha relacao.", "ERRADA: Soma 1, normalizada.", "ERRADA: Depende tambem da qualidade da divisao.", "ERRADA: Calculada para todos os atributos."]},
+  {id:12,topic:'arvore',q:`<p>A profundidade maxima (max_depth) e um hiperparametro que controla:</p>`,alts:["A complexidade do modelo", "A taxa de aprendizado", "O numero de atributos", "O tamanho do conjunto de validacao", "A semente aleatoria"],correct:0,explain:["CORRETA: max_depth controla a complexidade do modelo.", "ERRADA: Taxa de aprendizado nao e usada em arvores.", "ERRADA: Nao controla o numero de atributos.", "ERRADA: Nao relacionado.", "ERRADA: Nao e semente."]},
+  {id:13,topic:'arvore',q:`<p>Uma arvore foi treinada com min_samples_leaf=10. Isso significa que:</p>`,alts:["Cada no folha deve conter no minimo 10 amostras", "A arvore tera no maximo 10 folhas", "Cada no interno deve ter no minimo 10 amostras", "A profundidade maxima e 10", "O conjunto de treino tem 10 amostras"],correct:0,explain:["CORRETA: min_samples_leaf define o numero minimo de amostras em cada no folha.", "ERRADA: Nao limita o total de folhas.", "ERRADA: min_samples_split controla nos internos.", "ERRADA: Nao relacionado.", "ERRADA: Nao relacionado."]},
+  {id:14,topic:'arvore',q:`<p>Em um problema multiclasse (5 classes), em um no folha as distribuicoes sao: [40,30,20,5,5]. A classe prevista neste no sera:</p>`,alts:["Classe 1 (40 amostras)", "Classe 5 (5 amostras)", "A media ponderada das classes", "Aleatoria entre as classes", "Nao e possivel determinar"],correct:0,explain:["CORRETA: A classe prevista e a majoritaria (moda) = classe com 40 amostras.", "ERRADA: A minoritaria nunca e a prevista.", "ERRADA: Classe prevista e a moda.", "ERRADA: A decisao e deterministica.", "ERRADA: E possivel determinar pela moda."]},
+  {id:15,topic:'arvore',q:`<p>Sobre o algoritmo ID3, e correto afirmar que:</p>`,alts:["Utiliza o Indice de Gini como criterio", "Produz arvores exclusivamente binarias", "Utiliza Ganho de Informacao baseado em Entropia", "Nao aceita atributos categoricos", "Requer que todos os atributos sejam numericos"],correct:2,explain:["ERRADA: ID3 usa entropia e ganho de informacao.", "ERRADA: ID3 pode produzir multiplos ramos.", "CORRETA: ID3 utiliza Ganho de Informacao (baseado em Entropia).", "ERRADA: ID3 aceita atributos categoricos.", "ERRADA: ID3 trabalha bem com categoricos."]},
+  {id:16,topic:'regressao',q:`<p>Em uma regressao linear simples Y = B0 + B1*X + e, o coeficiente B1 = 2,5. Isso significa que:</p>`,alts:["Quando X aumenta 1 unidade, Y aumenta 2,5 unidades em media", "Quando Y aumenta 1 unidade, X aumenta 2,5 unidades", "O intercepto e 2,5", "A correlacao entre X e Y e 2,5", "O R^2 do modelo e 2,5"],correct:0,explain:["CORRETA: B1 representa a variacao esperada em Y para cada aumento de 1 unidade em X.", "ERRADA: A relacao e de X para Y.", "ERRADA: B1 e o coeficiente angular.", "ERRADA: Correlacao esta entre -1 e 1.", "ERRADA: R^2 esta entre 0 e 1."]},
+  {id:17,topic:'regressao',q:`<p>Uma regressao linear multipla com 3 preditores apresentou R^2=0,85 e R^2 ajustado=0,82. A diferenca sugere que:</p>`,alts:["Pode haver preditores que nao contribuem significativamente", "O modelo tem alto vies", "A correlacao entre as variaveis e zero", "O intercepto nao e significativo", "O erro padrao e nulo"],correct:0,explain:["CORRETA: R^2 ajustado penaliza a inclusao de preditores irrelevantes. A diferenca indica que alguns podem nao estar contribuindo.", "ERRADA: R^2 alto sugere baixo vies.", "ERRADA: Nao ha informacao sobre correlacao.", "ERRADA: Nao e possivel concluir.", "ERRADA: Erro padrao nulo e impossivel."]},
+  {id:18,topic:'regressao',q:`<div class="table-wrap"><table><tr><th>X</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr><tr><td>Y</td><td>3</td><td>5</td><td>7</td><td>9</td><td>11</td></tr></table></div><p>A partir dos dados acima, ajustou-se Y = B0 + B1*X. Os coeficientes B0 e B1 sao, respectivamente:</p>`,alts:["0 e 2", "1 e 2", "2 e 1", "0 e 1", "1 e 2,2"],correct:1,explain:["ERRADA: Intercepto 1, inclinacao 2.", "CORRETA: Y = 1 + 2X. Quando X=1, Y=3; X=2, Y=5. Perfeitamente linear.", "ERRADA: Intercepto 2, inclinacao 1.", "ERRADA: Intercepto nao e 0.", "ERRADA: Inclinacao e exatamente 2."]},
+  {id:19,topic:'regressao',q:`<p>O pressuposto de homocedasticidade na regressao linear significa que:</p>`,alts:["A variancia dos residuos e constante", "Os residuos sao normalmente distribuidos", "Nao ha correlacao entre os preditores", "A media dos residuos e zero", "Os dados nao contem outliers"],correct:0,explain:["CORRETA: Homocedasticidade = variancia constante dos erros.", "ERRADA: Normalidade e outro pressuposto.", "ERRADA: Ausencia de multicolinearidade.", "ERRADA: Media zero e outro pressuposto.", "ERRADA: Outliers sao outro topico."]},
+  {id:20,topic:'regressao',q:`<p>Em uma regressao linear, o p-value do coeficiente B1 e 0,03. Considerando alfa=0,05, conclui-se que:</p>`,alts:["B1 e estatisticamente significativo", "B1 nao e estatisticamente significativo", "O R^2 e 0,03", "O erro padrao e 0,03", "A hipotese nula deve ser aceita"],correct:0,explain:["CORRETA: p-valor < alfa (0,03<0,05) rejeita H0 (B1=0), coeficiente significativo.", "ERRADA: p-valor < alfa indica significancia.", "ERRADA: p-valor nao e R^2.", "ERRADA: p-valor nao e erro padrao.", "ERRADA: Rejeita-se H0."]},
+  {id:21,topic:'regressao',q:`<p>O coeficiente de determinacao R^2=0,75 significa que:</p>`,alts:["75% da variancia de Y e explicada pelo modelo", "75% dos pontos estao sobre a reta", "A correlacao entre X e Y e 0,75", "75% dos residuos sao nulos", "O erro padrao e 25%"],correct:0,explain:["CORRETA: R^2 mede a proporcao da variancia explicada pelos preditores.", "ERRADA: Nao mede pontos sobre a reta.", "ERRADA: R = |r|, nao r = R^2.", "ERRADA: Nao mede proporcao de residuos nulos.", "ERRADA: Nao ha relacao direta."]},
+  {id:22,topic:'regressao',q:`<p>Na regressao linear multipla, a multicolinearidade refere-se a:</p>`,alts:["Alta correlacao entre variaveis preditoras", "Correlacao entre preditores e resposta", "Variancia nao constante dos residuos", "Distribuicao nao normal dos erros", "Valores omissos nos dados"],correct:0,explain:["CORRETA: Multicolinearidade e alta correlacao entre preditoras.", "ERRADA: Correlacao com a resposta e desejavel.", "ERRADA: Heterocedasticidade.", "ERRADA: Violacao da normalidade.", "ERRADA: Valores omissos."]},
+  {id:23,topic:'regressao',q:`<p>O metodo dos Minimos Quadrados Ordinarios (MQO) busca minimizar:</p>`,alts:["A soma dos residuos", "A soma dos quadrados dos residuos", "A soma dos valores absolutos dos residuos", "A variancia dos residuos", "A media dos residuos"],correct:1,explain:["ERRADA: Soma simples pode ser zero mesmo com ajuste ruim.", "CORRETA: MQO minimiza S(y_i - y_chapeu_i)^2.", "ERRADA: Isso e LAD (desvio absoluto).", "ERRADA: Consequencia, nao alvo.", "ERRADA: MQO nao minimiza a media."]},
+  {id:24,topic:'regressao',q:`<p>Um modelo apresenta R^2=0,90 e R^2_aj=0,89 com 5 preditores. Um 6o preditor e adicionado: R^2=0,91 e R^2_aj=0,88. Isso indica que:</p>`,alts:["O novo preditor nao contribui significativamente", "O novo preditor e altamente relevante", "O modelo anterior estava com overfitting", "O R^2 sempre diminui com mais variaveis", "A amostra e muito pequena"],correct:0,explain:["CORRETA: R^2 ajustado penaliza variaveis irrelevantes. Sua queda indica que o novo preditor nao contribui o suficiente.", "ERRADA: Se fosse relevante, R^2_aj tambem aumentaria.", "ERRADA: Aumento de R^2 com queda de R^2_aj e esperado ao adicionar variavel fraca.", "ERRADA: R^2 nunca diminui.", "ERRADA: Nao ha evidencia."]},
+  {id:25,topic:'regressao',q:`<p>O intercepto B0 em uma regressao linear simples representa:</p>`,alts:["O valor esperado de Y quando X=0", "A inclinacao da reta", "O erro padrao", "O coeficiente de correlacao", "A variancia explicada"],correct:0,explain:["CORRETA: B0 e o valor esperado de Y quando X=0.", "ERRADA: Inclinacao e B1.", "ERRADA: Erro padrao e outra medida.", "ERRADA: Correlacao e r.", "ERRADA: Variancia explicada e R^2."]},
+  {id:26,topic:'regressao',q:`<p>Resultado de regressao: B1=3,2 (p=0,001); B2=1,5 (p=0,45); R^2=0,78; n=100. E correto afirmar que:</p>`,alts:["X1 e significativo e X2 nao e significativo", "Ambos os coeficientes sao significativos", "X2 e mais importante que X1", "O modelo explica 22% da variancia", "O intercepto nao foi informado, modelo invalido"],correct:0,explain:["CORRETA: X1 com p=0,001<0,05 (significativo); X2 com p=0,45>0,05 (nao significativo).", "ERRADA: X2 nao e significativo.", "ERRADA: Maior coeficiente nao indica importancia.", "ERRADA: R^2=0,78=78%.", "ERRADA: Intercepto esta implicito."]},
+  {id:27,topic:'regressao',q:`<p>Na regressao linear, o erro padrao dos residuos (sigma) e calculado como:</p>`,alts:["sqrt(SQR/(n-p-1))", "S(y_i-y_chapeu)/(n-1)", "sqrt(SQR/(n-1))", "SQR/(n-p)", "sqrt(SQT/(n-1))"],correct:0,explain:["CORRETA: sigma = sqrt(SQRes/(n-p-1)), onde p=nro preditores.", "ERRADA: Usa soma simples.", "ERRADA: Nao considera p.", "ERRADA: Denominador n-p-1.", "ERRADA: Essa e o DP de Y."]},
+  {id:28,topic:'regressao',q:`<p>O grafico de residuos vs valores ajustados mostra padrao de "cone" (abertura crescente). Isso viola o pressuposto de:</p>`,alts:["Homocedasticidade", "Independencia dos erros", "Linearidade", "Normalidade dos erros", "Ausencia de outliers"],correct:0,explain:["CORRETA: Padrao de cone = heterocedasticidade.", "ERRADA: Independencia e sequencia temporal.", "ERRADA: Nao-linearidade aparece como curva.", "ERRADA: Normalidade e Q-Q plot.", "ERRADA: Outliers sao pontos isolados."]},
+  {id:29,topic:'regressao',q:`<p>Em regressao linear, a estatistica F do teste global testa:</p>`,alts:["H0: todos os coeficientes B sao iguais a zero", "H0: B1=0", "H0: R^2=0", "H0: o intercepto e zero", "H0: os residuos sao normais"],correct:0,explain:["CORRETA: Teste F global: H0: B1=B2=...=Bp=0.", "ERRADA: Esse e o teste t individual.", "ERRADA: R^2=0 equivale, mas formulacao correta e sobre os B.", "ERRADA: F nao testa intercepto.", "ERRADA: Normalidade e Shapiro-Wilk."]},
+  {id:30,topic:'regressao',q:`<p>O VIF (Variance Inflation Factor) e utilizado para detectar:</p>`,alts:["Multicolinearidade", "Heterocedasticidade", "Autocorrelacao", "Normalidade", "Outliers"],correct:0,explain:["CORRETA: VIF mede inflacao da variancia devido a multicolinearidade.", "ERRADA: Heterocedasticidade = Breusch-Pagan.", "ERRADA: Autocorrelacao = Durbin-Watson.", "ERRADA: Normalidade = histograma/Q-Q.", "ERRADA: Outliers = residuos studentizados."]},
+  {id:31,topic:'metricas',q:`<p>Considere a matriz de confusao:</p><div class="confusion-matrix"><div class="cm-hdr">Real / Predito</div><div class="cm-hdr">Positivo</div><div class="cm-hdr">Negativo</div><div class="cm-label">Positivo</div><div class="cm-tp">VP=85</div><div class="cm-fn">FN=15</div><div class="cm-label">Negativo</div><div class="cm-fp">FP=20</div><div class="cm-tn">VN=80</div></div><p>A acuracia (accuracy) do modelo e:</p>`,alts:["0,75", "0,80", "0,82", "0,85", "0,90"],correct:2,explain:["ERRADA:", "ERRADA:", "CORRETA: Accuracy = (VP+VN)/(VP+VN+FP+FN) = (85+80)/(85+80+20+15) = 165/200 = 0,825.", "ERRADA:", "ERRADA:"]},
+  {id:32,topic:'metricas',q:`<p>Utilizando a mesma matriz de confusao:</p><div class="confusion-matrix"><div class="cm-hdr">Real / Predito</div><div class="cm-hdr">Positivo</div><div class="cm-hdr">Negativo</div><div class="cm-label">Positivo</div><div class="cm-tp">VP=85</div><div class="cm-fn">FN=15</div><div class="cm-label">Negativo</div><div class="cm-fp">FP=20</div><div class="cm-tn">VN=80</div></div><p>A Precision e:</p>`,alts:["0,81", "0,85", "0,80", "0,77", "0,89"],correct:0,explain:["CORRETA: Precision = VP/(VP+FP) = 85/(85+20) = 85/105 = 0,8095.", "ERRADA: 85/100 e Recall.", "ERRADA:", "ERRADA:", "ERRADA:"]},
+  {id:33,topic:'metricas',q:`<p>Utilizando a mesma matriz de confusao:</p><div class="confusion-matrix"><div class="cm-hdr">Real / Predito</div><div class="cm-hdr">Positivo</div><div class="cm-hdr">Negativo</div><div class="cm-label">Positivo</div><div class="cm-tp">VP=85</div><div class="cm-fn">FN=15</div><div class="cm-label">Negativo</div><div class="cm-fp">FP=20</div><div class="cm-tn">VN=80</div></div><p>O Recall e:</p>`,alts:["0,77", "0,81", "0,85", "0,80", "0,89"],correct:2,explain:["ERRADA:", "ERRADA: 0,81 e Precision.", "CORRETA: Recall = VP/(VP+FN) = 85/(85+15) = 85/100 = 0,85.", "ERRADA:", "ERRADA:"]},
+  {id:34,topic:'metricas',q:`<p>Utilizando a mesma matriz de confusao:</p><div class="confusion-matrix"><div class="cm-hdr">Real / Predito</div><div class="cm-hdr">Positivo</div><div class="cm-hdr">Negativo</div><div class="cm-label">Positivo</div><div class="cm-tp">VP=85</div><div class="cm-fn">FN=15</div><div class="cm-label">Negativo</div><div class="cm-fp">FP=20</div><div class="cm-tn">VN=80</div></div><p>O F1-Score e aproximadamente:</p>`,alts:["0,80", "0,83", "0,85", "0,87", "0,90"],correct:1,explain:["ERRADA:", "CORRETA: F1 = 2xPxR/(P+R) = 2x0,8095x0,85/(0,8095+0,85) = 1,3762/1,6595 = 0,829.", "ERRADA:", "ERRADA:", "ERRADA:"]},
+  {id:35,topic:'metricas',q:`<p>Em um problema desbalanceado (99% negativa, 1% positiva), qual metrica e mais adequada?</p>`,alts:["Precision e Recall (ou F1)", "Accuracy", "Erro absoluto medio", "Log-Loss", "R^2"],correct:0,explain:["CORRETA: Accuracy pode ser enganosa. Precision/Recall/F1 avaliam melhor a classe minoritaria.", "ERRADA: Enganosa em dados desbalanceados.", "ERRADA: MAE e para regressao.", "ERRADA: Log-Loss pode ser usado, mas Precision/Recall sao mais interpretaveis.", "ERRADA: R^2 e para regressao."]},
+  {id:36,topic:'metricas',q:`<p>Matriz de confusao:</p><div class="confusion-matrix"><div class="cm-hdr">Real / Predito</div><div class="cm-hdr">Positivo</div><div class="cm-hdr">Negativo</div><div class="cm-label">Positivo</div><div class="cm-tp">VP=120</div><div class="cm-fn">FN=30</div><div class="cm-label">Negativo</div><div class="cm-fp">FP=40</div><div class="cm-tn">VN=210</div></div><p>A Especificidade (Specificity) e:</p>`,alts:["0,80", "0,84", "0,86", "0,88", "0,90"],correct:1,explain:["ERRADA:", "CORRETA: Specificity = VN/(VN+FP) = 210/(210+40) = 210/250 = 0,84.", "ERRADA:", "ERRADA:", "ERRADA:"]},
+  {id:37,topic:'metricas',q:`<p>Um modelo apresentou: VP=160, FP=40, VN=180, FN=20, total 400. A acuracia e:</p>`,alts:["0,75", "0,80", "0,85", "0,90", "0,95"],correct:2,explain:["ERRADA:", "ERRADA:", "CORRETA: Accuracy = (160+180)/(160+180+40+20) = 340/400 = 0,85.", "ERRADA:", "ERRADA:"]},
+  {id:38,topic:'metricas',q:`<p>Modelo A: Prec=0,9 Rec=0,5. Modelo B: Prec=0,7 Rec=0,8. Considerando F1, qual e melhor?</p>`,alts:["Modelo A (F1~0,64)", "Modelo B (F1~0,75)", "Modelo A (F1~0,70)", "Modelo B (F1~0,80)", "Ambos F1 iguais"],correct:1,explain:["ERRADA: F1_A=2x0,9x0,5/(0,9+0,5)=0,9/1,4=0,643.", "CORRETA: F1_B=2x0,7x0,8/(0,7+0,8)=1,12/1,5=0,747. Modelo B e melhor.", "ERRADA:", "ERRADA:", "ERRADA: Diferentes."]},
+  {id:39,topic:'metricas',q:`<p>A metrica que mede a proporcao de VP entre todos os classificados como positivos e:</p>`,alts:["Precision", "Recall", "Accuracy", "F1-Score", "Specificity"],correct:0,explain:["CORRETA: Precision = VP/(VP+FP).", "ERRADA: Recall = VP/(VP+FN).", "ERRADA: Accuracy = (VP+VN)/Total.", "ERRADA: F1 e media harmonica.", "ERRADA: Specificity = VN/(VN+FP)."]},
+  {id:40,topic:'metricas',q:`<p>A metrica que mede a proporcao de VP identificados entre todos os positivos reais e:</p>`,alts:["Precision", "Accuracy", "Recall", "F1-Score", "Specificity"],correct:2,explain:["ERRADA: Precision = VP/(VP+FP).", "ERRADA: Accuracy = (VP+VN)/Total.", "CORRETA: Recall = VP/(VP+FN).", "ERRADA: F1 e media harmonica.", "ERRADA: Specificity = VN/(VN+FP)."]},
+  {id:41,topic:'metricas',q:`<p>Diagnostico de doenca rara (prevalencia 0,1%): Precision=0,02; Recall=0,95; Accuracy=0,999. Interpretacao:</p>`,alts:["Encontra 95% dos doentes mas alta taxa de FP", "Modelo excelente pois acuracia e 99,9%", "Precision baixa indica que nao encontra doentes", "Recall baixo e o principal problema", "O modelo nao aprendeu nada util"],correct:0,explain:["CORRETA: Recall alto (0,95) = 95% dos doentes identificados. Precision baixo (0,02) = maioria dos \"positivos\" sao FP.", "ERRADA: Accuracy e enganosa.", "ERRADA: Precision baixa indica muitos FP.", "ERRADA: Recall e alto.", "ERRADA: Recall=0,95 mostra que aprendeu."]},
+  {id:42,topic:'metricas',q:`<p>A media harmonica entre Precision e Recall e conhecida como:</p>`,alts:["F1-Score", "Accuracy", "Specificity", "Sensibilidade", "Kappa"],correct:0,explain:["CORRETA: F1 = 2 x (P x R)/(P + R).", "ERRADA: Accuracy = acertos totais.", "ERRADA: Specificity = VN/(VN+FP).", "ERRADA: Sensibilidade = Recall.", "ERRADA: Kappa mede concordância."]},
+  {id:43,topic:'roc',q:`<p>Na curva ROC, TPR (eixo Y) e equivalente a:</p>`,alts:["Recall / Sensibilidade", "Precision", "Specificity", "Accuracy", "F1-Score"],correct:0,explain:["CORRETA: TPR = VP/(VP+FN) = Recall = Sensibilidade.", "ERRADA: Precision = VP/(VP+FP).", "ERRADA: Specificity = VN/(VN+FP).", "ERRADA: Accuracy = (VP+VN)/Total.", "ERRADA: F1 e media harmonica."]},
+  {id:44,topic:'roc',q:`<p>Um modelo apresenta AUC-ROC=0,50. Isso significa que:</p>`,alts:["O modelo nao e melhor que aleatorio", "O modelo e perfeito", "O modelo esta invertendo as classes", "O modelo tem overfitting", "AUC=0,50 e o maximo possivel"],correct:0,explain:["CORRETA: AUC=0,50 = classificador aleatorio.", "ERRADA: Perfeito tem AUC=1,0.", "ERRADA: Inversao total daria AUC=0.", "ERRADA: Nao ha relacao.", "ERRADA: Maximo e 1,0."]},
+  {id:45,topic:'roc',q:`<p>Modelo X: AUC=0,92; Modelo Y: AUC=0,88. E correto afirmar que:</p>`,alts:["X tem melhor capacidade de discriminacao", "Y e superior (menor AUC = menos overfitting)", "X tem 92% de acuracia", "Y tem 12% de erro", "Nao e possivel comparar por AUC"],correct:0,explain:["CORRETA: AUC mede discriminacao. Maior AUC = melhor separacao.", "ERRADA: Menor AUC nao indica menos overfitting.", "ERRADA: AUC nao e acuracia.", "ERRADA: AUC nao e complementar.", "ERRADA: AUC e valida para comparacao."]},
+  {id:46,topic:'roc',q:`<p>A curva ROC e construida variando-se:</p>`,alts:["O limiar de decisao (threshold)", "Os hiperparametros do modelo", "O K no K-NN", "A profundidade da arvore", "A taxa de aprendizado"],correct:0,explain:["CORRETA: Curva ROC = variando o threshold, calculando TPR e FPR.", "ERRADA: Hiperparametros sao fixos.", "ERRADA:", "ERRADA:", "ERRADA:"]},
+  {id:47,topic:'roc',q:`<p>Na curva ROC, o ponto (0,1) representa:</p>`,alts:["Classificacao perfeita (FPR=0, TPR=1)", "Pior classificacao", "Classificacao aleatoria", "Threshold muito baixo", "Threshold muito alto"],correct:0,explain:["CORRETA: (0,1) = FPR=0, TPR=1 = classificacao perfeita.", "ERRADA: Pior seria (1,0).", "ERRADA: Aleatorio esta na diagonal.", "ERRADA: Threshold baixo aumenta ambos.", "ERRADA: Threshold alto reduz ambos."]},
+  {id:48,topic:'roc',q:`<p>A interpretacao correta da AUC e:</p>`,alts:["Probabilidade de o modelo atribuir score maior a um positivo aleatorio do que a um negativo", "A acuracia media do modelo", "A porcentagem de acertos na classe positiva", "O threshold otimo de classificacao", "A media entre Precision e Recall"],correct:0,explain:["CORRETA: AUC = P(score(pos) > score(neg)).", "ERRADA: AUC nao e acuracia.", "ERRADA: AUC considera ambas as classes.", "ERRADA: Threshold e um ponto na curva.", "ERRADA: Isso e F1."]},
+  {id:49,topic:'roc',q:`<p>Quando a curva ROC de um modelo esta abaixo da diagonal (45 graus), isso indica que:</p>`,alts:["O modelo e pior que aleatorio (invertendo previsoes)", "O modelo e perfeito", "O conjunto de teste e pequeno", "O threshold esta mal calibrado", "A AUC e 1"],correct:0,explain:["CORRETA: Curva abaixo da diagonal = AUC<0,5. Provavelmente invertendo as classes.", "ERRADA: Perfeito esta no canto (0,1).", "ERRADA: Nao relacionado.", "ERRADA: Threshold varia ao longo da curva.", "ERRADA: AUC<0,5."]},
+  {id:50,topic:'naive',q:`<p>O Naive Bayes e chamado de "ingenuo" porque:</p>`,alts:["Assume independencia condicional entre atributos dada a classe", "Assume que dados sao linearmente separaveis", "Nao requer dados de treinamento", "Assume que todas as classes tem mesma probabilidade a priori", "Ignora completamente os atributos"],correct:0,explain:["CORRETA: Suposicao \"ingenuo\" = atributos condicionalmente independentes dada a classe.", "ERRADA: Naive Bayes nao assume separabilidade linear.", "ERRADA: Requer dados de treino.", "ERRADA: Nao assume equiprobabilidade.", "ERRADA: Usa atributos para calcular probabilidades."]},
+  {id:51,topic:'naive',q:`<p>Naive Bayes e um classificador:</p>`,alts:["Generativo", "Discriminativo", "Baseado em distancia", "Nao parametrico", "Ensemble"],correct:0,explain:["CORRETA: Naive Bayes e generativo: modela P(X|Y) e P(Y) para calcular P(Y|X).", "ERRADA: Discriminativos modelam P(Y|X) diretamente.", "ERRADA: Nao e baseado em distancia.", "ERRADA: E parametrico.", "ERRADA: E modelo unico."]},
+  {id:52,topic:'naive',q:`<p>No Naive Bayes com atributos continuos, a distribuicao mais comum para P(X_i|Y) e:</p>`,alts:["Gaussiana (Normal)", "Binomial", "Poisson", "Uniforme", "Exponencial"],correct:0,explain:["CORRETA: Naive Bayes Gaussiano assume distribuicao Normal.", "ERRADA: Binomial e para dados discretos.", "ERRADA: Poisson e para contagem.", "ERRADA: Uniforme nao e tipica.", "ERRADA: Exponencial e para tempos de espera."]},
+  {id:53,topic:'naive',q:`<p>Duas classes (+ e -). P(+)=0,4; P(-)=0,6; P(X=1|+)=0,7; P(X=1|-)=0,3. Um exemplo com X=1 sera classificado como:</p>`,alts:["Classe +", "Classe -", "Indeterminado", "Depende do threshold", "Inclassificavel"],correct:0,explain:["CORRETA: P(+|X=1) prop P(X=1|+)xP(+) = 0,7x0,4=0,28. P(-|X=1) prop 0,3x0,6=0,18. Classe + e mais provavel.", "ERRADA: 0,18 < 0,28.", "ERRADA: Contas deterministicas.", "ERRADA: Threshold padrao 0,5.", "ERRADA: Classificavel."]},
+  {id:54,topic:'naive',q:`<p>Uma limitacao importante do Naive Bayes e:</p>`,alts:["Sofer com atributos correlacionados", "Nao lidar com dados categoricos", "Exigir normalizacao dos dados", "Nao funcionar para classificacao binaria", "Exigir grande quantidade de memoria"],correct:0,explain:["CORRETA: Atributos correlacionados violam a suposicao de independencia.", "ERRADA: Naive Bayes lida bem com categoricos.", "ERRADA: Nao requer normalizacao.", "ERRADA: Funciona bem para binaria.", "ERRADA: E computacionalmente leve."]},
+  {id:55,topic:'naive',q:`<p>O Teorema de Bayes: P(Y|X) =</p>`,alts:["P(X|Y) x P(Y) / P(X)", "P(Y) x P(X) / P(X|Y)", "P(X|Y) / P(Y) x P(X)", "P(X) x P(Y) / P(X|Y)", "P(Y) / P(X|Y) x P(X)"],correct:0,explain:["CORRETA: P(Y|X) = P(X|Y) x P(Y) / P(X).", "ERRADA: Formula invertida.", "ERRADA: Incorreta.", "ERRADA: Incorreta.", "ERRADA: Incorreta."]},
+  {id:56,topic:'naive',q:`<p>Laplace Smoothing no Naive Bayes e utilizado para:</p>`,alts:["Evitar probabilidade zero para atributos nao vistos no treino", "Reduzir o overfitting", "Acelerar o treinamento", "Normalizar os atributos", "Balancear as classes"],correct:0,explain:["CORRETA: Suavizacao de Laplace adiciona pequeno valor para evitar zeros.", "ERRADA: Objetivo principal e evitar zeros.", "ERRADA: Adiciona computacao.", "ERRADA: Nao normaliza.", "ERRADA: Nao balanceia."]},
+  {id:57,topic:'naive',q:`<p>No Naive Bayes para classificacao de textos (spam), a variante mais adequada e:</p>`,alts:["Multinomial Naive Bayes", "Gaussian Naive Bayes", "Bernoulli Naive Bayes", "Complement Naive Bayes", "Qualquer variante funciona igual"],correct:0,explain:["CORRETA: Multinomial e padrao para textos, modela frequencia das palavras.", "ERRADA: Gaussiano e para continuos.", "ERRADA: Bernoulli e para binarios.", "ERRADA: Complement e para desbalanceados.", "ERRADA: Depende da natureza dos dados."]},
+  {id:58,topic:'redes',q:`<p>Considere a rede neural feedforward:</p><div class="svg-wrap">
+<svg viewBox="0 0 350 180" width="350" height="180" style="max-width:100%"><style>.nnd{fill:#e3f2fd;stroke:#1565c0;stroke-width:1.5}.nne{stroke:#b0bec5;stroke-width:1;fill:none}.nnt{font-size:10px;text-anchor:middle;fill:#212121;font-family:Segoe UI,sans-serif}</style></div><p>Esta rede possui:</p>`,alts:["3 camadas (entrada, 1 oculta, saida)", "2 camadas (entrada, saida)", "4 camadas (entrada, 2 ocultas, saida)", "5 camadas (todas ocultas)", "Apenas 1 camada"],correct:2,explain:["ERRADA: Ignora a 2a camada oculta.", "ERRADA: Ignora as ocultas.", "CORRETA: 4 camadas: 1 entrada, 2 ocultas, 1 saida.", "ERRADA: Exagera.", "ERRADA: Ignora ocultas e saida."]},
+  {id:59,topic:'redes',q:`<p>A funcao sigmoide sigma(x)=1/(1+e^-x) tem como principal limitacao:</p>`,alts:["Gradiente vanishing (desaparecimento)", "Nao ser diferenciavel", "So funcionar para multiclasse", "Ser computacionalmente inviavel", "Produzir apenas valores negativos"],correct:0,explain:["CORRETA: Sigmoide satura para valores grandes, gradiente ~0 (vanishing).", "ERRADA: Sigmoide e diferenciavel.", "ERRADA: Usada em binaria tambem.", "ERRADA: Computacionalmente simples.", "ERRADA: Produz entre 0 e 1."]},
+  {id:60,topic:'redes',q:`<p>O algoritmo de backpropagation e utilizado para:</p>`,alts:["Calcular gradientes dos pesos em relacao a perda", "Propagar dados da entrada para saida", "Inicializar os pesos da rede", "Selecionar a arquitetura", "Realizar a poda da rede"],correct:0,explain:["CORRETA: Backpropagation calcula gradientes pela regra da cadeia.", "ERRADA: Isso e forward pass.", "ERRADA: Inicializacao e previa.", "ERRADA: Arquitetura e a priori.", "ERRADA: Poda e outra tecnica."]},
+  {id:61,topic:'redes',q:`<p>A funcao de ativacao ReLU e definida como:</p>`,alts:["f(x)=max(0,x)", "f(x)=1/(1+e^-x)", "f(x)=tanh(x)", "f(x)=e^x/S e^x", "f(x)=x para todo x"],correct:0,explain:["CORRETA: ReLU = max(0,x).", "ERRADA: Sigmoide.", "ERRADA: Tangente hiperbolica.", "ERRADA: Softmax.", "ERRADA: Identidade."]},
+  {id:62,topic:'redes',q:`<p>O dropout e uma tecnica de regularizacao que:</p>`,alts:["Desativa aleatoriamente fracao dos neuronios no treino", "Remove camadas da rede", "Reduz o numero de epocas", "Aumenta a taxa de aprendizado", "Duplica dados de treino"],correct:0,explain:["CORRETA: Dropout desativa aleatoriamente neuronios, forcando representacoes robustas.", "ERRADA: Nao remove camadas.", "ERRADA: Nro de epocas e outro hiperparametro.", "ERRADA: Nao altera learning rate.", "ERRADA: Isso seria data augmentation."]},
+  {id:63,topic:'redes',q:`<p>A funcao de perda mais adequada para regressao com redes neurais e:</p>`,alts:["Erro Quadratico Medio (MSE)", "Entropia Cruzada", "Hinge Loss", "Perda Contrastiva", "KL Divergence"],correct:0,explain:["CORRETA: MSE e padrao para regressao.", "ERRADA: Cross-Entropy e para classificacao.", "ERRADA: Hinge Loss e para SVM.", "ERRADA: Perda Contrastiva e para similaridade.", "ERRADA: KL e para comparar distribuicoes."]},
+  {id:64,topic:'redes',q:`<p>O "aprendizado profundo" (deep learning) caracteriza-se por:</p>`,alts:["Multiplas camadas ocultas", "Redes com apenas uma camada oculta", "Algoritmos nao baseados em gradiente", "Ausencia de funcoes de ativacao", "Treinamento exclusivo em CPU"],correct:0,explain:["CORRETA: Deep Learning = multiplas camadas ocultas (profundas).", "ERRADA: Uma camada nao e \"profundo\".", "ERRADA: Usa gradiente (backpropagation).", "ERRADA: Ativacoes sao essenciais.", "ERRADA: Usa GPUs."]},
+  {id:65,topic:'redes',q:`<p>A funcao softmax e usada na camada de saida para:</p>`,alts:["Classificacao multiclasse", "Regressao", "Classificacao binaria", "Agrupamento (clustering)", "Reducao de dimensionalidade"],correct:0,explain:["CORRETA: Softmax converte saidas em probabilidades que somam 1.", "ERRADA: Regressao usa ativacao linear.", "ERRADA: Binaria usa sigmoide.", "ERRADA: Clustering usa outros algoritmos.", "ERRADA: PCA/autoencoders."]},
+  {id:66,topic:'pca',q:`<p>O objetivo principal do PCA e:</p>`,alts:["Reduzir dimensionalidade preservando maxima variancia", "Reduzir dimensionalidade preservando separacao entre classes", "Selecionar os atributos mais importantes", "Aumentar dimensionalidade para melhorar acuracia", "Eliminar outliers"],correct:0,explain:["CORRETA: PCA encontra direcoes de maxima variancia, reduzindo dimensionalidade.", "ERRADA: PCA e nao-supervisionado.", "ERRADA: PCA extrai, nao seleciona.", "ERRADA: PCA reduz.", "ERRADA: Nao e deteccao de outliers."]},
+  {id:67,topic:'pca',q:`<p>E correto afirmar que PCA e um algoritmo:</p>`,alts:["Nao supervisionado", "Supervisionado", "Semissupervisionado", "Por reforco", "Nao se aplica"],correct:0,explain:["CORRETA: PCA e nao supervisionado.", "ERRADA: Nao usa rotulos.", "ERRADA: Nao usa rotulos parciais.", "ERRADA:", "ERRADA: Aplicavel."]},
+  {id:68,topic:'pca',q:`<p>Com 10 variaveis, 3 primeiros PCs explicam 85% da variancia. Isso significa que:</p>`,alts:["Podemos reduzir de 10 para 3 dimensoes mantendo 85% da informacao", "Os 3 componentes contem 85% das variaveis originais", "85% dos dados sao representados corretamente", "Os outros 7 componentes sao ruido", "Precisamos de 85 componentes"],correct:0,explain:["CORRETA: Com 3 PCs explicando 85%, projetamos em 3D mantendo a maior parte da informacao.", "ERRADA: % e de variancia, nao de variaveis.", "ERRADA:", "ERRADA: Nao podemos afirmar.", "ERRADA: Ja explicamos 85%."]},
+  {id:69,topic:'pca',q:`<p>Os componentes principais no PCA sao:</p>`,alts:["Combinacoes lineares das variaveis originais", "Subconjuntos das variaveis originais", "Variaveis selecionadas aleatoriamente", "Medias das variaveis originais", "Variaveis latentes nao observaveis"],correct:0,explain:["CORRETA: Cada PC e uma combinacao linear (autovetor) das variaveis originais.", "ERRADA: PCA extrai combinacoes.", "ERRADA: Nao aleatorios.", "ERRADA: Nao sao medias.", "ERRADA: Sao combinacoes lineares."]},
+  {id:70,topic:'pca',q:`<p>A variancia explicada por cada PC e dada:</p>`,alts:["Pelo autovalor correspondente dividido pela soma total", "Pelo autovetor correspondente", "Pela media dos dados", "Pela correlacao entre os componentes", "Pelo desvio padrao dos dados"],correct:0,explain:["CORRETA: Proporcao = lambda_i / S lambda_j.", "ERRADA: Autovetores dao a direcao.", "ERRADA: Media nao e usada.", "ERRADA: Componentes sao ortogonais.", "ERRADA: DP sozinho nao da proporcao."]},
+  {id:71,topic:'pca',q:`<p>Antes de aplicar PCA, e recomendado:</p>`,alts:["Padronizar (normalizar) as variaveis (media 0, DP 1)", "Remover todas as variaveis categoricas", "Aplicar sem padronizacao", "Garantir mesma unidade", "Nao e necessario pre-processamento"],correct:0,explain:["CORRETA: PCA e sensivel a escala. Padronizacao evita que variaveis com maior escala dominem.", "ERRADA: Categoricas requerem tratamento.", "ERRADA: Padroniza-se antes.", "ERRADA: Padronizacao remove unidades.", "ERRADA: Pre-processamento e essencial."]},
+  {id:72,topic:'pca',q:`<p>Usando todos os componentes (100% da variancia), PCA equivale a:</p>`,alts:["Uma rotacao dos eixos originais", "Uma reducao de dimensionalidade", "Um algoritmo de classificacao", "Um metodo de clusterizacao", "Uma transformacao nao linear"],correct:0,explain:["CORRETA: Com todos os PCs, PCA apenas rotaciona o sistema de coordenadas.", "ERRADA: So ha reducao com menos componentes.", "ERRADA:", "ERRADA:", "ERRADA: PCA e linear."]},
+  {id:73,topic:'pca',q:`<p>Com 100 amostras e 20 variaveis, qual o maximo de PCs que podem ser extraidos?</p>`,alts:["20", "100", "19", "99", "min(100,20)=20"],correct:4,explain:["ERRADA: E 20, mas o motivo correto e min(n, p).", "ERRADA:", "ERRADA:", "ERRADA:", "CORRETA: Maximo de PCs = min(n_amostras, n_features) = min(100,20)=20."]},
+  {id:74,topic:'knn',q:`<p>No K-NN, a classificacao de um novo ponto e feita:</p>`,alts:["Pela maioria dos votos entre os K vizinhos mais proximos", "Pela media dos K vizinhos", "Pela classe do vizinho mais distante", "Pela classe mediana dos vizinhos", "Aleatoriamente entre os K vizinhos"],correct:0,explain:["CORRETA: K-NN classifica por votacao majoritaria (moda).", "ERRADA: Media e para regressao.", "ERRADA: Vizinho mais distante nao importa.", "ERRADA: Mediana e para regressao.", "ERRADA: Deterministico."]},
+  {id:75,topic:'knn',q:`<p>Em K-NN, valores pequenos de K (ex: K=1) tendem a causar:</p>`,alts:["Overfitting (alta variancia)", "Underfitting (alto vies)", "Modelo mais robusto", "Maior tempo de treino", "Menor sensibilidade a ruido"],correct:0,explain:["CORRETA: K pequeno = sensivel a ruido local, overfitting (alta variancia).", "ERRADA: Underfitting com K grande.", "ERRADA: K pequeno e menos robusto.", "ERRADA: K-NN nao tem treino classico.", "ERRADA: K pequeno e mais sensivel."]},
+  {id:76,topic:'knn',q:`<p>Valores grandes de K no K-NN tendem a causar:</p>`,alts:["Underfitting (alto vies)", "Overfitting (alta variancia)", "Modelo mais rapido na predicao", "Melhor desempenho sempre", "Ignorar completamente os dados"],correct:0,explain:["CORRETA: K grande suaviza a fronteira, aumentando o vies (underfitting).", "ERRADA: K grande reduz variancia.", "ERRADA: K grande torna predicão mais lenta.", "ERRADA: K otimo depende dos dados.", "ERRADA: Nao ignora, mas suaviza."]},
+  {id:77,topic:'knn',q:`<p>A distancia Euclidiana e adequada no K-NN quando:</p>`,alts:["Os atributos estao na mesma escala", "Os dados sao categoricos", "Ha muitos atributos irrelevantes", "As classes sao desbalanceadas", "O numero de amostras e pequeno"],correct:0,explain:["CORRETA: Com mesma escala, nenhum atributo domina a distancia.", "ERRADA: Nao ideal para categoricos.", "ERRADA: Irrelevantes atrapalham.", "ERRADA: Desbalanceamento e outro problema.", "ERRADA: Nao relacionado."]},
+  {id:78,topic:'knn',q:`<p>No K-NN, a normalizacao dos atributos e importante porque:</p>`,alts:["Evita que atributos com maior escala dominem a distancia", "Reduz o overfitting", "Acelera o treinamento", "Permite usar K-NN com categoricos", "E exigida pelo algoritmo"],correct:0,explain:["CORRETA: Normalizacao garante contribuicao igual de todos os atributos.", "ERRADA: Nao e regularizacao.", "ERRADA: K-NN nao tem fase de treino.", "ERRADA: Nao converte categoricos.", "ERRADA: Funciona sem, mas pior."]},
+  {id:79,topic:'knn',q:`<p>Como o K-NN faz a predicao para um novo ponto?</p>`,alts:["Calcula distancia para todos os pontos de treino e seleciona K mais proximos", "Constroi modelo de regressao no treino", "Cria arvore de decisao", "Calcula media de todos os pontos", "Seleciona aleatoriamente K pontos"],correct:0,explain:["CORRETA: K-NN e lazy learner: armazena treino e calcula distancia para cada novo ponto.", "ERRADA: Nao constroi modelo.", "ERRADA: Nao cria arvore.", "ERRADA: Usa apenas K mais proximos.", "ERRADA: Nao aleatorio."]},
+  {id:80,topic:'entropia',q:`<p>Em classificacao binaria com classes equiprovaveis (p=0,5 cada), a entropia H(S) e:</p><div class="calc">H(S) = -S p_i log_2(p_i)</div>`,alts:["0", "0,5", "0,81", "1,0", "2,0"],correct:3,explain:["ERRADA: 0 = entropia minima (no puro).", "ERRADA:", "ERRADA:", "CORRETA: H = -[0,5xlog2(0,5)+0,5xlog2(0,5)] = -[0,5x(-1)+0,5x(-1)] = 1. Entropia maxima para 2 classes = 1.", "ERRADA: Maximo para 2 classes e 1."]},
+  {id:81,topic:'entropia',q:`<p>Conjunto com 10 exemplos: 6 classe A, 4 classe B. Entropia (base 2) aproximadamente:</p>`,alts:["0,60", "0,72", "0,81", "0,97", "1,00"],correct:3,explain:["ERRADA:", "ERRADA:", "ERRADA:", "CORRETA: H = -(6/10xlog2(0,6) + 4/10xlog2(0,4)) = -(0,6x(-0,737) + 0,4x(-1,322)) = 0,971.", "ERRADA: Maximo e 1."]},
+  {id:82,topic:'entropia',q:`<p>A entropia de um no com exemplos de apenas uma classe e:</p>`,alts:["0", "1", "Depende do logaritmo", "ln(1)=0", "0,5"],correct:0,explain:["CORRETA: No puro: p=1 para uma classe. 1xlog(1)=0 e 0xlog(0)=0. Entropia=0.", "ERRADA: 1 e entropia maxima.", "ERRADA: Qualquer base da 0.", "ERRADA: ln(1)=0, mas a razao e mais geral.", "ERRADA: No puro = sempre 0."]},
+  {id:83,topic:'entropia',q:`<p>Qual afirmacao sobre entropia e correta?</p>`,alts:["Entropia mede impureza/incerteza de um conjunto", "Entropia maxima ocorre quando o no e puro", "Entropia e usada apenas em arvores de decisao", "Entropia pode ser negativa", "Entropia e calculada sempre na base 10"],correct:0,explain:["CORRETA: Entropia mede incerteza. Maior entropia = maior incerteza.", "ERRADA: Maxima quando classes sao equiprovaveis.", "ERRADA: Usada em teoria da informacao, fisica etc.", "ERRADA: Sempre >= 0.", "ERRADA: Base pode ser 2, e ou 10."]},
+  {id:84,topic:'entropia',q:`<p>Se a entropia de um conjunto e 0, isso significa que:</p>`,alts:["O conjunto e completamente homogeneo (uma classe)", "As classes estao igualmente distribuidas", "Nao ha dados suficientes", "A variancia dos dados e nula", "O ganho de informacao e maximo"],correct:0,explain:["CORRETA: Entropia 0 = pureza total, todos da mesma classe.", "ERRADA: Equiprovaveis dao entropia maxima.", "ERRADA: Nao relacionado.", "ERRADA: Variancia nula e outro conceito.", "ERRADA: IG maximo quando entropia inicial alta e final baixa."]},
+  {id:85,topic:'ganho',q:`<p>O Ganho de Informacao (IG) e definido como:</p>`,alts:["Entropia do no pai - Entropia ponderada dos filhos", "Entropia do filho - Entropia do pai", "Soma das entropias dos filhos", "Produto das entropias dos nos", "Entropia do pai + Entropia dos filhos"],correct:0,explain:["CORRETA: IG = H(pai) - S (|Sv|/|S|) x H(Sv). Mede reducao da entropia.", "ERRADA: Ordem inversa.", "ERRADA: Soma simples nao considera ponderacao.", "ERRADA:", "ERRADA: Soma nao captura reducao."]},
+  {id:86,topic:'ganho',q:`<p>No pai com entropia 0,97. Filho1: 6 exemplos (entropia 0,65). Filho2: 4 exemplos (entropia 0,88). IG aproximado:</p>`,alts:["0,18", "0,22", "0,29", "0,35", "0,97"],correct:1,explain:["ERRADA:", "CORRETA: IG = 0,97 - (6/10x0,65 + 4/10x0,88) = 0,97 - 0,742 = 0,228.", "ERRADA:", "ERRADA:", "ERRADA: Esse e o valor inicial."]},
+  {id:87,topic:'ganho',q:`<p>No contexto de arvores de decisao, o IG e utilizado para:</p>`,alts:["Selecionar o melhor atributo para dividir o no", "Podar a arvore", "Inicializar os pesos", "Calcular a profundidade maxima", "Avaliar o modelo final"],correct:0,explain:["CORRETA: IG escolhe atributo que melhor separa os dados (maior IG).", "ERRADA: Poda usa cost-complexity.", "ERRADA:", "ERRADA:", "ERRADA: Avaliacao usa acuracia etc."]},
+  {id:88,topic:'ganho',q:`<p>Se o Ganho de Informacao de um atributo e zero, significa que:</p>`,alts:["O atributo nao melhora a pureza dos filhos", "E o melhor atributo para divisao", "A entropia do pai e zero", "Deve ser usado como raiz", "O conjunto e perfeito"],correct:0,explain:["CORRETA: IG=0: a divisao nao reduz entropia.", "ERRADA: Melhor tem maior IG.", "ERRADA: IG=0 pode ocorrer com qualquer entropia.", "ERRADA: Nao deve ser usado.", "ERRADA: Nao relacionado."]},
+  {id:89,topic:'ganho',q:`<p>O Ganho de Informacao tende a favorecer atributos com:</p>`,alts:["Muitos valores possiveis", "Poucos valores possiveis", "Valores continuos", "Baixa correlacao com a classe", "Alta correlacao com outros atributos"],correct:0,explain:["CORRETA: IG favorece atributos com muitos valores (criam particoes puras). Por isso CART usa Gini.", "ERRADA: Poucos valores dao menos ganho.", "ERRADA: Continuos exigem discretizacao.", "ERRADA: Baixa correlacao = baixo IG.", "ERRADA: Correlacao entre atributos nao e considerada."]},
+  {id:90,topic:'vies',q:`<p>O erro de um modelo ML pode ser decomposto em tres componentes:</p>`,alts:["Vies + Variancia + Ruido irredutivel", "Erro treino + Erro teste + Erro validacao", "Vies + Overfitting + Underfitting", "Variancia + Covariancia + Ruido", "Erro sistematico + Erro aleatorio"],correct:0,explain:["CORRETA: Erro = Vies^2 + Variancia + Ruido irredutivel.", "ERRADA: Sao tipos de erro.", "ERRADA: Sao manifestacoes.", "ERRADA:", "ERRADA: Nao e a decomposicao classica."]},
+  {id:91,topic:'vies',q:`<p>Um modelo com alto vies tipicamente apresenta:</p>`,alts:["Underfitting (baixo desempenho treino e teste)", "Overfitting (alto treino, baixo teste)", "Bom desempenho em ambos", "Alta sensibilidade a variacoes", "Muitos parametros"],correct:0,explain:["CORRETA: Alto vies = modelo muito simples, underfitting.", "ERRADA: Overfitting = alta variancia.", "ERRADA:", "ERRADA: Isso e alta variancia.", "ERRADA: Alto vies = poucos parametros."]},
+  {id:92,topic:'vies',q:`<p>Um modelo com alta variancia tipicamente apresenta:</p>`,alts:["Overfitting (alto treino, baixo teste)", "Underfitting", "Desempenho equilibrado", "Baixa sensibilidade a ruido", "Modelo muito simples"],correct:0,explain:["CORRETA: Alta variancia = overfitting, captura ruido.", "ERRADA: Underfitting = alto vies.", "ERRADA: Ha desequilibrio.", "ERRADA: Alta variancia = alta sensibilidade.", "ERRADA: Modelos simples tem baixa variancia."]},
+  {id:93,topic:'vies',q:`<p>O trade-off vies-variancia implica que:</p>`,alts:["Reduzir o vies tende a aumentar a variancia e vice-versa", "Ambos sempre diminuem juntos", "Aumentar complexidade reduz ambos", "O ruido irredutivel pode ser eliminado", "Modelos simples tem alta variancia"],correct:0,explain:["CORRETA: Trade-off: aumentar complexidade reduz vies mas aumenta variancia.", "ERRADA: Movem-se em direcoes opostas.", "ERRADA: Aumentar complexidade reduz vies e aumenta variancia.", "ERRADA: Ruido irredutivel nao se elimina.", "ERRADA: Modelos simples = baixa variancia."]},
+  {id:94,topic:'mse',q:`<p>MSE = (1/n) x S(y_i - y_chapeu_i)^2. Valores reais [3,5,7], previstos [2,6,6]. MSE:</p>`,alts:["0,67", "1,00", "1,33", "1,67", "2,00"],correct:1,explain:["ERRADA:", "CORRETA: MSE = ((3-2)^2+(5-6)^2+(7-6)^2)/3 = (1+1+1)/3 = 1,00.", "ERRADA:", "ERRADA:", "ERRADA:"]},
+  {id:95,topic:'mse',q:`<p>A raiz do Erro Quadratico Medio (RMSE) em relacao ao MSE:</p>`,alts:["Esta na mesma unidade da variavel alvo", "Esta na unidade ao quadrado", "E sempre menor que o MSE", "E independente das unidades", "Nao tem relacao com MSE"],correct:0,explain:["CORRETA: RMSE = sqrt(MSE), mesma unidade da variavel alvo.", "ERRADA: MSE esta ao quadrado.", "ERRADA: Depende do valor.", "ERRADA: Herda a unidade.", "ERRADA: RMSE = sqrt(MSE)."]},
+  {id:96,topic:'mse',q:`<p>Qual afirmacao sobre MAE e RMSE e correta?</p>`,alts:["RMSE e mais sensivel a outliers que o MAE", "MAE e mais sensivel a outliers", "Ambos tem mesma sensibilidade", "MAE esta em unidade ao quadrado", "RMSE nao pode ser usado para regressao"],correct:0,explain:["CORRETA: RMSE eleva erros ao quadrado, dando mais peso a erros grandes (outliers).", "ERRADA: MAE trata todos igualmente.", "ERRADA:", "ERRADA: MAE esta na mesma unidade.", "ERRADA: RMSE e padrao para regressao."]},
+  {id:97,topic:'mse',q:`<p>R^2 = 1 - SSE/SST. Em um modelo, SSE=40, SST=100. R^2 e:</p>`,alts:["0,40", "0,50", "0,60", "0,75", "0,80"],correct:2,explain:["ERRADA: 1-40/100=0,6.", "ERRADA:", "CORRETA: R^2 = 1 - 40/100 = 0,6. Modelo explica 60% da variancia.", "ERRADA:", "ERRADA:"]},
+  {id:98,topic:'anova',q:`<p>A analise de variancia (ANOVA) e utilizada para:</p>`,alts:["Comparar medias de tres ou mais grupos", "Comparar variancias de dois grupos", "Calcular correlacao entre variaveis", "Testar normalidade dos dados", "Analisar distribuicao de frequencias"],correct:0,explain:["CORRETA: ANOVA testa diferenca significativa entre medias de 3+ grupos.", "ERRADA: Teste F compara variancias, ANOVA compara medias.", "ERRADA:", "ERRADA: Shapiro-Wilk.", "ERRADA: Tabela de contingencia."]},
+  {id:99,topic:'anova',q:`<p>Na ANOVA de um fator, a estatistica F e calculada como:</p>`,alts:["F = Variancia entre grupos / Variancia dentro", "F = Variancia dentro / Variancia entre", "F = Media entre / Media dentro", "F = SQTotal / SQResidual", "F = Diferenca medias / Erro padrao"],correct:0,explain:["CORRETA: F = MQ_entre / MQ_dentro. Maior F = maior evidencia contra H0.", "ERRADA: Ordem inversa.", "ERRADA:", "ERRADA:", "ERRADA: Isso e teste t."]},
+  {id:100,topic:'anova',q:`<p>3 metodos de ensino, 30 alunos cada. ANOVA: F=4,5; p=0,014; alfa=0,05. Conclusao:</p>`,alts:["Diferenca significativa entre pelo menos um par", "Todos os metodos sao iguais", "Metodo 1 e melhor", "Amostra insuficiente", "F calculado < F critico"],correct:0,explain:["CORRETA: p(0,014)<0,05, rejeita H0. Ha evidencia de diferenca.", "ERRADA: Se p>=0,05.", "ERRADA: ANOVA nao identifica qual par.", "ERRADA: 90 amostras e razoavel.", "ERRADA: p=0,014 indica rejeicao."]},
+];
+
+// ===== APP STATE =====
+let state = {currentQ:0,answers:{},marked:[],timeRemaining:14400,startTime:null,finished:false,examStarted:false};
+let timerInterval = null;
+let sidebarVisible = false;
+let currentFilter = 'all';
+
+function init() {
+  renderTopicDist();
+  loadState();
+  if (state.examStarted && !state.finished) {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('examScreen').classList.add('active');
+    renderQuestionGrid();
+    renderTopicFilters();
+    showQuestion(state.currentQ);
+    startTimer();
+  }
+}
+
+function renderTopicDist() {
+  document.getElementById('topicDistList').innerHTML = TOPICS.map(t => `<li><span>${t.name}:</span> ${t.count} questoes</li>`).join('');
+}
+
+function saveState() {
+  try { localStorage.setItem('simuladoFGV_state', JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('simuladoFGV_state');
+    if (saved) {
+      const p = JSON.parse(saved);
+      if (p.examStarted) {
+        state = p;
+        if (state.startTime) state.timeRemaining = Math.max(0, 14400 - Math.floor((Date.now() - state.startTime) / 1000));
+      }
+    }
+  } catch(e) {}
+}
+
+function clearSavedState() { localStorage.removeItem('simuladoFGV_state'); }
+
+function startExam() {
+  clearSavedState();
+  state = {currentQ:0,answers:{},marked:[],timeRemaining:14400,startTime:Date.now(),finished:false,examStarted:true};
+  saveState();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('examScreen').classList.add('active');
+  document.getElementById('resultsScreen').classList.remove('active');
+  document.getElementById('resultsScreen').style.display = 'none';
+  renderQuestionGrid();
+  renderTopicFilters();
+  showQuestion(0);
+  startTimer();
+}
+
+function startTimer() {
+  if (timerInterval) clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    if (state.finished) return;
+    state.timeRemaining--;
+    if (state.timeRemaining <= 0) clearInterval(timerInterval), finishExam();
+    updateTimerDisplay();
+    saveState();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const t = Math.max(0, state.timeRemaining);
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
+  const el = document.getElementById('timer');
+  el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.className = 'timer' + (t <= 300 ? ' danger' : t <= 1800 ? ' warning' : '');
+}
+
+function renderQuestionGrid() {
+  const grid = document.getElementById('questionGrid');
+  if (!grid) return;
+  grid.innerHTML = QUESTIONS.map((q,i) => {
+    let cls = 'q-num';
+    if (state.answers[q.id] !== undefined) cls += ' answered';
+    if (state.marked.includes(q.id)) cls += ' marked';
+    if (i === state.currentQ) cls += ' current';
+    return `<div class="${cls}" onclick="goToQuestion(${i})">${i+1}</div>`;
+  }).join('');
+  updateStats();
+}
+
+function renderTopicFilters() {
+  const c = document.getElementById('topicFilters');
+  if (!c) return;
+  c.innerHTML = '<button class="active" data-topic="all" onclick="filterTopic(\'all\')">Todas</button>' +
+    TOPICS.map(t => `<button data-topic="${t.id}" onclick="filterTopic('${t.id}')">${t.name}</button>`).join('');
+}
+
+function filterTopic(topicId) {
+  currentFilter = topicId;
+  document.querySelectorAll('.topic-filter button').forEach(b => b.classList.toggle('active', b.dataset.topic === topicId));
+  const firstIdx = topicId === 'all' ? 0 : QUESTIONS.findIndex(q => q.topic === topicId);
+  if (firstIdx >= 0) { state.currentQ = firstIdx; showQuestion(firstIdx); renderQuestionGrid(); }
+}
+
+function navigate(dir) {
+  const total = QUESTIONS.length;
+  let next = state.currentQ + dir;
+  if (next < 0) next = 0;
+  if (next >= total) next = total - 1;
+  if (next !== state.currentQ) { state.currentQ = next; showQuestion(next); renderQuestionGrid(); document.getElementById('mainContent').scrollTop = 0; }
+}
+
+function goToQuestion(idx) {
+  state.currentQ = idx; showQuestion(idx); renderQuestionGrid();
+  if (window.innerWidth <= 768) toggleSidebar(false);
+  document.getElementById('mainContent').scrollTop = 0;
+}
+
+function showQuestion(idx) {
+  const q = QUESTIONS[idx];
+  document.getElementById('qNumberDisplay').textContent = `Questao ${idx+1} de ${QUESTIONS.length}`;
+  document.getElementById('qTopicDisplay').textContent = (TOPICS.find(t => t.id === q.topic) || {}).name || q.topic;
+  document.getElementById('qText').innerHTML = q.q;
+  const letters = ['A','B','C','D','E'];
+  document.getElementById('alternatives').innerHTML = q.alts.map((alt,i) => {
+    const checked = state.answers[q.id] === i ? 'checked' : '';
+    return `<li><input type="radio" name="q${q.id}" id="q${q.id}a${i}" value="${i}" ${checked} onchange="selectAnswer(${q.id},${i})"><label for="q${q.id}a${i}"><span class="alt-letter">${letters[i]}.</span> ${alt}</label></li>`;
+  }).join('');
+  const mb = document.getElementById('markBtn');
+  const isMarked = state.marked.includes(q.id);
+  mb.textContent = isMarked ? ' Marcada para revisao' : ' Marcar para revisao';
+  mb.className = 'mark-btn' + (isMarked ? ' marked' : '');
+  document.querySelector('.nav-buttons .prev').style.visibility = idx === 0 ? 'hidden' : 'visible';
+  document.querySelector('.nav-buttons .next').style.visibility = idx === QUESTIONS.length - 1 ? 'hidden' : 'visible';
+  renderQuestionGrid();
+}
+
+function selectAnswer(qId, idx) {
+  state.answers[qId] = idx; saveState(); renderQuestionGrid();
+}
+
+function toggleMark() {
+  const qId = QUESTIONS[state.currentQ].id;
+  const i = state.marked.indexOf(qId);
+  if (i >= 0) state.marked.splice(i, 1); else state.marked.push(qId);
+  saveState(); showQuestion(state.currentQ); renderQuestionGrid();
+}
+
+function updateStats() {
+  const answered = Object.keys(state.answers).length;
+  document.getElementById('answeredCount').textContent = `${answered}/${QUESTIONS.length}`;
+  document.getElementById('markedCount').textContent = `${state.marked.length} marcadas`;
+  document.getElementById('progressBar').style.width = `${(answered/QUESTIONS.length)*100}%`;
+}
+
+function toggleSidebar(show) {
+  if (show === undefined) show = !sidebarVisible;
+  sidebarVisible = show;
+  document.getElementById('sidebar').classList.toggle('show', show);
+  document.querySelector('.sidebar-overlay').classList.toggle('show', show);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+}
+
+function finishExam() {
+  if (state.finished) return;
+  const answered = Object.keys(state.answers).length;
+  if (answered < QUESTIONS.length) {
+    if (!confirm(`Voce respondeu ${answered} de ${QUESTIONS.length} questoes. Deseja finalizar mesmo assim?`)) return;
+  } else {
+    if (!confirm('Deseja finalizar a prova e ver o resultado?')) return;
+  }
+  state.finished = true;
+  clearInterval(timerInterval);
+  saveState();
+  document.getElementById('examScreen').classList.remove('active');
+  document.getElementById('examScreen').style.display = 'none';
+  document.getElementById('resultsScreen').style.display = 'block';
+  document.getElementById('resultsScreen').classList.add('active');
+  showResults();
+}
+
+function showResults() {
+  const total = QUESTIONS.length;
+  const answered = Object.keys(state.answers).length;
+  let correct = 0, wrong = 0;
+  QUESTIONS.forEach(q => {
+    if (state.answers[q.id] === undefined) return;
+    if (state.answers[q.id] === q.correct) correct++; else wrong++;
+  });
+  const pct = total > 0 ? Math.round((correct/total)*100) : 0;
+  const elapsed = state.startTime ? Math.floor((Date.now() - state.startTime)/1000) : 0;
+  document.getElementById('scoreCircle').style.setProperty('--score-deg', `${(pct/100)*360}deg`);
+  document.getElementById('scoreVal').textContent = `${pct}%`;
+  const msg = document.getElementById('scoreMessage');
+  if (pct >= 90) { msg.textContent = 'Excelente! Desempenho excepcional.'; msg.style.color = 'var(--correct)'; }
+  else if (pct >= 70) { msg.textContent = 'Bom desempenho! Continue praticando.'; msg.style.color = 'var(--correct)'; }
+  else if (pct >= 50) { msg.textContent = 'Desempenho regular. Reveja os conceitos.'; msg.style.color = 'var(--accent)'; }
+  else { msg.textContent = 'Estude mais os topicos e tente novamente.'; msg.style.color = 'var(--wrong)'; }
+  document.getElementById('rAnswered').textContent = `${answered}/${total}`;
+  document.getElementById('rCorrect').textContent = correct;
+  document.getElementById('rWrong').textContent = wrong;
+  const eh = Math.floor(elapsed/3600), em = Math.floor((elapsed%3600)/60), es = elapsed%60;
+  document.getElementById('rTime').textContent = `${String(eh).padStart(2,'0')}:${String(em).padStart(2,'0')}:${String(es).padStart(2,'0')}`;
+  showResultTab('performance');
+}
+
+function showResultTab(tab) {
+  document.querySelectorAll('.result-tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.result-tabs button').forEach(b => { if (b.textContent.includes(tab === 'performance' ? 'Desempenho' : 'Gabarito')) b.classList.add('active'); });
+  const panel = document.getElementById('resultPanel');
+  if (tab === 'performance') renderPerformanceChart(panel);
+  else renderAnswerKey(panel);
+}
+
+function renderPerformanceChart(container) {
+  const topicData = {};
+  TOPICS.forEach(t => { topicData[t.id] = { name: t.name, total: 0, correct: 0 }; });
+  QUESTIONS.forEach(q => {
+    if (!topicData[q.topic]) return;
+    topicData[q.topic].total++;
+    if (state.answers[q.id] === q.correct) topicData[q.topic].correct++;
+  });
+  let html = '<div class="performance-chart">';
+  TOPICS.forEach(t => {
+    const d = topicData[t.id];
+    const pct = d.total > 0 ? Math.round((d.correct/d.total)*100) : 0;
+    const cls = pct >= 70 ? 'good' : pct >= 40 ? 'ok' : 'bad';
+    html += `<div class="topic-bar"><span class="topic-label">${t.name}</span><div class="bar-bg"><div class="bar-fill ${cls}" style="width:${pct}%">${pct}%</div></div><span class="bar-pct">${d.correct}/${d.total}</span></div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderAnswerKey(container) {
+  const letters = ['A','B','C','D','E'];
+  let html = '<div class="answer-key">';
+  QUESTIONS.forEach((q, idx) => {
+    const userAns = state.answers[q.id];
+    const isCorrect = userAns === q.correct;
+    const answered = userAns !== undefined;
+    const userLetter = answered ? letters[userAns] : '--';
+    const correctLetter = letters[q.correct];
+    const topicName = (TOPICS.find(t => t.id === q.topic) || {}).name || q.topic;
+    const statusIcon = answered ? (isCorrect ? '✅' : '❌') : '⏺';
+    html += `<div class="q-review"><div class="rev-header"><span class="rev-q">${statusIcon} Questao ${idx+1}</span><span class="rev-topic">${topicName}</span></div>`;
+    html += `<div class="rev-answer">`;
+    html += `<span class="${answered ? (isCorrect ? 'rev-user correct' : 'rev-user') : ''}">Sua resposta: ${userLetter}</span>`;
+    html += `<span class="rev-correct">Gabarito: ${correctLetter}</span>`;
+    html += `</div>`;
+    if (q.explain) {
+      html += `<div class="rev-explain">`;
+      q.explain.forEach((e, ei) => {
+        const isCorrectAlt = ei === q.correct;
+        if (isCorrectAlt) html += `<strong>${e}</strong><br>`;
+        else if (userAns === ei && !isCorrect) html += `<span style="color:var(--wrong)">${e}</span><br>`;
+      });
+      // Show correct explanation clearly
+      html += `<br><strong>Analise das alternativas:</strong><br>`;
+      q.explain.forEach((e, ei) => {
+        if (ei === q.correct) html += `<strong style="color:var(--correct)">${letters[ei]}. ${e}</strong><br>`;
+        else html += `<span>${letters[ei]}. ${e}</span><br>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+  if (!state.examStarted || state.finished) return;
+  if (e.key === 'ArrowLeft') { navigate(-1); e.preventDefault(); }
+  if (e.key === 'ArrowRight') { navigate(1); e.preventDefault(); }
+  const q = QUESTIONS[state.currentQ];
+  if (q) {
+    if (e.key === 'a' || e.key === 'A') selectAnswer(q.id, 0);
+    if (e.key === 'b' || e.key === 'B') selectAnswer(q.id, 1);
+    if (e.key === 'c' || e.key === 'C') selectAnswer(q.id, 2);
+    if (e.key === 'd' || e.key === 'D') selectAnswer(q.id, 3);
+    if (e.key === 'e' || e.key === 'E') selectAnswer(q.id, 4);
+  }
+  if (e.key === 'm' || e.key === 'M') toggleMark();
+});
+
+init();
+</script>
+</body>
+</html>
